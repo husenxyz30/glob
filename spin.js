@@ -1,7 +1,6 @@
 const fs = require('fs');
 const axios = require('axios');
 const cron = require('node-cron');
-const readline = require('readline');
 
 // ANSI color codes
 const colors = {
@@ -13,70 +12,6 @@ const colors = {
     blue: '\x1b[34m',
     cyan: '\x1b[36m'
 };
-
-class PasswordValidator {
-    constructor() {
-        this.AUTH_URL = 'http://localhost:3000/login';
-        this.rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
-    }
-
-    async promptPassword() {
-        return new Promise((resolve) => {
-            this.rl.question('Enter password to continue: ', (password) => {
-                resolve(password);
-            });
-        });
-    }
-
-    async validatePassword(password) {
-        try {
-            const response = await axios.post(this.AUTH_URL, {
-                password: password
-            }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            return response.data.message === "Login successful!";
-        } catch (error) {
-            if (error.response && error.response.data) {
-                console.error(`${colors.red}${error.response.data.message}${colors.reset}`);
-            } else {
-                console.error(`${colors.red}Error validating password: ${error.message}${colors.reset}`);
-            }
-            return false;
-        }
-    }
-
-    async authenticate() {
-        let isAuthenticated = false;
-        let attempts = 0;
-        const MAX_ATTEMPTS = 3;
-
-        while (!isAuthenticated && attempts < MAX_ATTEMPTS) {
-            const password = await this.promptPassword();
-            isAuthenticated = await this.validatePassword(password);
-
-            if (!isAuthenticated) {
-                attempts++;
-                const remainingAttempts = MAX_ATTEMPTS - attempts;
-                if (remainingAttempts > 0) {
-                    console.log(`${colors.red}${remainingAttempts} attempts remaining.${colors.reset}`);
-                } else {
-                    console.log(`${colors.red}Maximum attempts reached. Please try again later.${colors.reset}`);
-                    process.exit(1);
-                }
-            }
-        }
-
-        this.rl.close();
-        return isAuthenticated;
-    }
-}
 
 class AutoSpinBot {
     constructor() {
@@ -251,20 +186,13 @@ class AutoSpinBot {
     }
 }
 
-// Start the bot with authentication
+// Start the bot without authentication
 async function main() {
     console.log(`${colors.yellow}\n=== GLOB Auto Spin Bot | Airdrop Insiders ===${colors.reset}\n`);
     
-    // Initialize and run password validation
-    const validator = new PasswordValidator();
-    const isAuthenticated = await validator.authenticate();
-    
-    if (isAuthenticated) {
-        console.log(`${colors.green}Authentication successful!${colors.reset}\n`);
-        const bot = new AutoSpinBot();
-        await bot.initialize();
-        bot.start();
-    }
+    const bot = new AutoSpinBot();
+    await bot.initialize();
+    bot.start();
 }
 
 main().catch(console.error);
